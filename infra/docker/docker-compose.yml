@@ -1,0 +1,33 @@
+networks:
+  app-network:
+    driver: bridge
+
+# Persistent Volumes
+volumes:
+  postgres_data: # Persistent storage for PostgreSQL
+
+services:
+  # PostgreSQL Database Service
+  postgres:
+    image: postgres:17-bookworm # Stable PostgreSQL image (Debian-based)
+    restart: unless-stopped # Restart unless manually stopped
+
+    expose:
+      - "5432"
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persist database data
+
+    networks:
+      - app-network # Internal app network
+
+    logging:
+      driver: json-file # Default Docker logging driver
+      options:
+        max-size: "30m" # Rotate logs after 30MB
+        max-file: "3" # Keep max 3 log files
