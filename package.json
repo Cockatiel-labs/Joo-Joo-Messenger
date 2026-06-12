@@ -8,6 +8,8 @@
   "scripts": {
     "lint": "biome check .",
     "format": "biome format --write .",
+    "dev:web": "bun --filter @cockatiel/web dev",
+    "dev:api": "bun --filter @cockatiel/api dev",
     "build:web": "bun --filter @cockatiel/web build",
     "build:api": "bun --filter @cockatiel/api build"
   },
