@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./config/*": "./config/*.ts"
+    "./config/*": "./config/*.ts",
+    "./constants/*": "./constants/*.ts",
+    "./schemas/*": "./schemas/*.ts"
   },
   "dependencies": {
     "zod": "^4.4.3"
