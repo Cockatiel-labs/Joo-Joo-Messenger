@@ -1,6 +1,6 @@
 "use client";
 
-import { type SignupFormValues, signupSchema } from "@cockatiel/shared/schemas/auth/auth.schema";
+import { type SignupInput, signupSchema } from "@cockatiel/shared/schemas/auth/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, LucideProvider } from "lucide-react";
 import Image from "next/image";
@@ -25,7 +25,7 @@ export default function Signup() {
     handleSubmit,
     formState: { errors },
     control,
-  } = useForm<SignupFormValues>({
+  } = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
     mode: "onChange",
   });
@@ -46,7 +46,7 @@ export default function Signup() {
 
   const { data, isLoading, isError } = useCheckUsernameQuery(usernameQuery);
 
-  const onSubmit: SubmitHandler<SignupFormValues> = (data) => {
+  const onSubmit: SubmitHandler<SignupInput> = (data) => {
     console.log(data);
   };
 
