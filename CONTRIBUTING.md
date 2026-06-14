@@ -63,13 +63,13 @@ docker compose -f ./infra/docker/docker-compose.yml up -d
 ### Run the Backend
 
 ```bash
-bun --filter @cockatiel/api dev
+bun run dev:api
 ```
 
 ### Run the Frontend
 
 ```bash
-bun --filter @cockatiel/web dev
+bun run dev:web
 ```
 
 ## Pull Requests
