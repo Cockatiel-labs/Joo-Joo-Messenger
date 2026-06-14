@@ -1,7 +1,7 @@
 import * as z from "zod";
 
 export const frontendEnvSchema = z.object({
-  BASE_URL: z.string(),
+  NEXT_PUBLIC_BASE_URL: z.url(),
   PORT: z.coerce.number().int().positive().default(3000),
 });
 
