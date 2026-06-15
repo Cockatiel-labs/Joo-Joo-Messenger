@@ -1,10 +1,15 @@
 import { usernameRegex } from "@cockatiel/shared/constants/regex";
 import { checkUsernameQuery, signinSchema, signupSchema } from "@cockatiel/shared/schemas/auth/auth.schema";
 import { Elysia } from "elysia";
+import { accessTokenCookieOptions } from "../../constants/cookie";
+import { ACCESS_TOKEN_EXP } from "../../constants/jwt";
+import { authGuard } from "../../guards/auth.guard";
+import { jwtConfig } from "../../plugins/jwt";
 import { AuthResult } from "./model";
 import { getIsUsernameAvailable, signIn, signup } from "./service";
 
 export const auth = new Elysia({ prefix: "/v1/auth" })
+  .use(jwtConfig)
   .get(
     "/check-username",
     async ({ query: { username }, set }) => {
@@ -38,63 +43,46 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
       },
     },
   )
-  .post(
-    "/sign-in",
-    async ({ body, set }) => {
-      try {
-        const response = await signIn(body);
-
-        if (!response.success) {
-          set.status = 401;
-          return {
-            success: false,
-            message: "Invalid username or password",
-          };
-        }
-
-        return {
-          success: true,
-          message: "Login Successfully",
-          data: response.data,
-        };
-      } catch (error) {
-        console.error("Sign-in error:", error);
-
-        set.status = 500;
-        return {
-          success: false,
-          message: "Internal server error",
-        };
-      }
-    },
-    {
-      body: signinSchema,
-      response: {
-        200: AuthResult.authResponse,
-        401: AuthResult.errorResponse,
-        500: AuthResult.errorResponse,
-      },
-    },
+  .group("/profile", (app) =>
+    app.use(authGuard).get("/", async ({ payload }) => {
+      return payload;
+    }),
   )
   .post(
     "/sign-up",
-    async ({ body, set }) => {
+    async ({ jwt, body, cookie: { accessToken }, set }) => {
       try {
-        const response = await signup(body);
+        const user = await signup(body);
 
-        if (!response.success) {
-          set.status = response.message === "Username already exists" ? 409 : 400;
+        if (!user) {
+          set.status = 409;
+
           return {
             success: false,
-            message: response.message,
+            message: "Username already exists",
           };
         }
+
+        const token = await jwt.sign({
+          sub: user.id,
+          exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP, // 15 min
+        });
+
+        accessToken.set({
+          value: token,
+          ...accessTokenCookieOptions,
+        });
 
         set.status = 201;
         return {
           success: true,
-          message: response.message,
-          data: response.data,
+          message: "User created Successfully",
+          data: {
+            user: {
+              id: user.id,
+              username: user.username,
+            },
+          },
         };
       } catch (error) {
         console.error("Sign-up error:", error);
@@ -108,6 +96,59 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
     },
     {
       body: signupSchema,
+      response: {
+        201: AuthResult.authResponse,
+        409: AuthResult.errorResponse,
+        500: AuthResult.errorResponse,
+      },
+    },
+  )
+  .post(
+    "/sign-in",
+    async ({ jwt, body, cookie: { accessToken }, set }) => {
+      try {
+        const user = await signIn(body);
+
+        if (!user) {
+          set.status = 401;
+          return {
+            success: false,
+            message: "Invalid username or password",
+          };
+        }
+
+        const token = await jwt.sign({
+          sub: user.id,
+          exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP, // 15 min
+        });
+
+        accessToken.set({
+          value: token,
+          ...accessTokenCookieOptions,
+        });
+
+        return {
+          success: true,
+          message: "Login Successfully",
+          data: {
+            user: {
+              id: user.id,
+              username: user.username,
+            },
+          },
+        };
+      } catch (error) {
+        console.error("Sign-in error:", error);
+
+        set.status = 500;
+        return {
+          success: false,
+          message: "Internal server error",
+        };
+      }
+    },
+    {
+      body: signinSchema,
       response: {
         200: AuthResult.authResponse,
         401: AuthResult.errorResponse,

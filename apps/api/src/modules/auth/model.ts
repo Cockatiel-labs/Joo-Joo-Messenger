@@ -9,7 +9,6 @@ export const AuthResult = {
         id: t.String(),
         username: t.String(),
       }),
-      token: t.String(),
     }),
   }),
 
