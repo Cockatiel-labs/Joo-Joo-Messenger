@@ -1,49 +1,26 @@
 import type { SigninInput, SignupInput } from "@cockatiel/shared/schemas/auth/auth.schema";
-import type { AuthModel } from "./model";
 import * as repository from "./repository";
 
-export async function getIsUsernameAvailable(username: string): Promise<boolean> {
+export async function getIsUsernameAvailable(username: string) {
   return repository.isUsernameAvailable(username);
 }
 
-export async function signIn(body: SigninInput): Promise<AuthModel["authResponse" | "errorResponse"]> {
+export async function signIn(body: SigninInput) {
   const user = await repository.getUserByUsername(body.username);
 
-  if (!user)
-    return {
-      success: false,
-      message: "Invalid username or password",
-    };
+  if (!user) return null;
 
   const isMatch = await Bun.password.verify(body.password, user.password);
 
-  if (!isMatch)
-    return {
-      success: false,
-      message: "Invalid username or password",
-    };
+  if (!isMatch) return null;
 
-  return {
-    success: true,
-    message: "Login Successfully",
-    data: {
-      user: {
-        id: user.id,
-        username: user.username,
-      },
-      token: "YOUR_KEY",
-    },
-  };
+  return user;
 }
 
-export async function signup(body: SignupInput): Promise<AuthModel["authResponse" | "errorResponse"]> {
+export async function signup(body: SignupInput) {
   const isUsernameAvailable = await repository.isUsernameAvailable(body.username);
 
-  if (!isUsernameAvailable)
-    return {
-      success: false,
-      message: "Username already exists",
-    };
+  if (!isUsernameAvailable) return null;
 
   const argonHash = await Bun.password.hash(body.password, {
     algorithm: "argon2id",
@@ -56,28 +33,10 @@ export async function signup(body: SignupInput): Promise<AuthModel["authResponse
       username: body.username,
       password: argonHash,
     });
+    return user;
+  } catch (error) {
+    console.error(error);
 
-    return {
-      success: true,
-      message: "User created successfully",
-      data: {
-        user,
-        token: "YOUR_KEY",
-      },
-    };
-  } catch (error: unknown) {
-    const postgresError = error as {
-      cause?: {
-        code?: string;
-      };
-    };
-
-    if (postgresError.cause?.code === "23505")
-      return {
-        success: false,
-        message: "Username already exists",
-      };
-
-    throw error;
+    return null;
   }
 }

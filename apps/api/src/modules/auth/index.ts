@@ -1,9 +1,18 @@
 import { checkUsernameQuery, signinSchema, signupSchema } from "@cockatiel/shared/schemas/auth/auth.schema";
+import jwt from "@elysia/jwt";
 import { Elysia } from "elysia";
+import { envConfig } from "../../config/env";
+import { ACCESS_TOKEN_TTL_SECONDS } from "../../constants/jwt";
 import { AuthResult } from "./model";
 import { getIsUsernameAvailable, signIn, signup } from "./service";
 
 export const auth = new Elysia({ prefix: "/v1/auth" })
+  .use(
+    jwt({
+      name: "jwt",
+      secret: envConfig.JWT_SECRET,
+    }),
+  )
   .get(
     "/check-username",
     async ({ query: { username }, set }) => {
@@ -29,11 +38,11 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
   )
   .post(
     "/sign-in",
-    async ({ body, set }) => {
+    async ({ jwt, body, set }) => {
       try {
-        const response = await signIn(body);
+        const user = await signIn(body);
 
-        if (!response.success) {
+        if (!user) {
           set.status = 401;
           return {
             success: false,
@@ -41,10 +50,21 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
           };
         }
 
+        const token = await jwt.sign({
+          sub: user.id,
+          exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_TTL_SECONDS, // 15 min
+        });
+
         return {
           success: true,
           message: "Login Successfully",
-          data: response.data,
+          data: {
+            user: {
+              id: user.id,
+              username: user.username,
+            },
+            token,
+          },
         };
       } catch (error) {
         console.error("Sign-in error:", error);
@@ -67,23 +87,35 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
   )
   .post(
     "/sign-up",
-    async ({ body, set }) => {
+    async ({ body, jwt, set }) => {
       try {
-        const response = await signup(body);
+        const user = await signup(body);
 
-        if (!response.success) {
-          set.status = response.message === "Username already exists" ? 409 : 400;
+        if (!user) {
+          set.status = 409;
+
           return {
             success: false,
-            message: response.message,
+            message: "Username already exists",
           };
         }
+
+        const token = await jwt.sign({
+          sub: user.id,
+          exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_TTL_SECONDS, // 15 min
+        });
 
         set.status = 201;
         return {
           success: true,
-          message: response.message,
-          data: response.data,
+          message: "User created Successfully",
+          data: {
+            user: {
+              id: user.id,
+              username: user.username,
+            },
+            token,
+          },
         };
       } catch (error) {
         console.error("Sign-up error:", error);
@@ -98,8 +130,8 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
     {
       body: signupSchema,
       response: {
-        200: AuthResult.authResponse,
-        401: AuthResult.errorResponse,
+        201: AuthResult.authResponse,
+        409: AuthResult.errorResponse,
         500: AuthResult.errorResponse,
       },
     },

@@ -13,6 +13,7 @@
       "dependencies": {
         "@cockatiel/shared": "workspace:*",
         "@elysia/cors": "^1.4.2",
+        "@elysia/jwt": "^1.4.2",
         "drizzle-orm": "^0.45.2",
         "drizzle-typebox": "^0.3.3",
         "elysia": "latest",
@@ -157,6 +158,8 @@
     "@ecies/ciphers": ["@ecies/ciphers@0.2.6", "", { "peerDependencies": { "@noble/ciphers": "^1.0.0" } }, "sha512-patgsRPKGkhhoBjETV4XxD0En4ui5fbX0hzayqI3M8tvNMGUoUvmyYAIWwlxBc1KX5cturfqByYdj5bYGRpN9g=="],
 
     "@elysia/cors": ["@elysia/cors@1.4.2", "", { "peerDependencies": { "elysia": ">= 1.4.0" } }, "sha512-dXkfo1IxZWJkJReNYnPJorJqb+XpWno0D/YWlMEJSkiFIFd751zJ4R/YswAYdo88mLWo8cycEj673o7L+gbxsw=="],
+
+    "@elysia/jwt": ["@elysia/jwt@1.4.2", "", { "dependencies": { "jose": "^6.0.11" }, "peerDependencies": { "elysia": ">= 1.4.27" } }, "sha512-KhLe6XxI+NHoYZiHqPhWg8SU0v+pegsxXsZSa/CXic/BrjlFbO26uTERtOQNlnByp/IGUB4qpLF6kQhvfYvGyg=="],
 
     "@emnapi/runtime": ["@emnapi/runtime@1.11.0", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-55coeOFKHv1ywEcUXJtWU5f+Jr/W5tZDvZig8DLKSwUN1JpROQ4rk/SNOQiFWmaR/VKF4zuFyW1B8JduOSv6Pg=="],
 
