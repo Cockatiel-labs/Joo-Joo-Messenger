@@ -1,28 +1,25 @@
 # Pull Request
 
-## Description
+## Summary
 
-Provide a brief summary of the changes introduced in this pull request.
-
-Related issue:
+What changed?
 
 Fixes #
 
-## Type of Change
+## Before submitting
 
-* [ ] Bug fix
-* [ ] New feature
-* [ ] Documentation update
-* [ ] Refactor
-* [ ] Other
+- [ ] The PR targets the `develop` branch
+- [ ] I tested my changes locally
+- [ ] No new errors or warnings were introduced
+- [ ] Documentation was updated (if needed)
+- [ ] Code follows the project's formatting rules
 
-## Testing
+## Notes
 
-Describe how you tested your changes.
+This project uses Biome for formatting and linting.
 
-## Checklist
+Useful commands:
 
-* [ ] My code follows the project's coding conventions.
-* [ ] I have reviewed my own changes.
-* [ ] I have updated documentation when necessary.
-* [ ] My changes do not introduce new warnings or errors.
+```bash
+bun run lint
+bun run format

@@ -8,28 +8,28 @@ Cockatiel is an open-source, privacy-first messaging platform built in public. C
 
 You can help the project by:
 
-- Reporting bugs
-- Suggesting new features
-- Improving documentation
-- Reviewing code and pull requests
-- Fixing issues
-- Implementing new features
+* Reporting bugs
+* Suggesting new features
+* Improving documentation
+* Reviewing code and pull requests
+* Fixing issues
+* Implementing new features
 
 ## Before You Start
 
 Before opening a new issue, please:
 
-- Search existing issues and discussions to avoid duplicates
-- Check the project roadmap
-- Make sure your proposal aligns with the project's goals
+* Search existing issues and discussions to avoid duplicates
+* Check the project roadmap
+* Make sure your proposal aligns with the project's goals
 
 ## Development Setup
 
 ### Requirements
 
-- Bun
-- Docker
-- Docker Compose
+* Bun
+* Docker
+* Docker Compose
 
 ### Clone the Repository
 
@@ -72,22 +72,55 @@ bun run dev:api
 bun run dev:web
 ```
 
+## Code Style
+
+This project uses Biome for formatting and linting.
+
+Before opening a pull request, please run:
+
+```bash
+bun run format
+bun run lint
+```
+
+Available scripts:
+
+```bash
+bun run dev:web
+bun run dev:api
+
+bun run build:web
+bun run build:api
+```
+
 ## Pull Requests
 
 When submitting a pull request:
 
-- Keep changes focused and reasonably scoped
-- Link related issues whenever possible
-- Update documentation when necessary
-- Ensure the project builds successfully
-- Respond to review feedback constructively
+* Open pull requests against the `develop` branch
+* Do not target the `main` branch
+* Keep changes focused and reasonably scoped
+* Link related issues whenever possible
+* Update documentation when necessary
+* Ensure the project builds successfully
+* Run formatting and linting checks before submitting
+* Respond to review feedback constructively
+
+## Good First Issues
+
+If you're new to the project, look for issues labeled:
+
+* `good first issue`
+* `help wanted`
+
+These issues are intentionally scoped for new contributors and are a great way to get familiar with the codebase.
 
 ## Coding Guidelines
 
-- Write clear and maintainable code
-- Prefer readability over cleverness
-- Follow existing project conventions
-- Avoid introducing unnecessary dependencies
+* Write clear and maintainable code
+* Prefer readability over cleverness
+* Follow existing project conventions
+* Avoid introducing unnecessary dependencies
 
 ## Questions and Discussions
 
