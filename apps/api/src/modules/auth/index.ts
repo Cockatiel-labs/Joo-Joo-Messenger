@@ -144,4 +144,25 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
         500: AuthResult.errorResponse,
       },
     },
+  )
+  .post(
+    "/logout",
+    async ({ cookie: { accessToken } }) => {
+      accessToken.set({
+        value: "",
+        ...accessTokenCookieOptions,
+        maxAge: 0, // overwrite
+        expires: new Date(0), // overwrite
+      });
+
+      return {
+        success: true,
+        message: "Logged out successfully",
+      };
+    },
+    {
+      response: {
+        200: AuthResult.logoutResponse,
+      },
+    },
   );

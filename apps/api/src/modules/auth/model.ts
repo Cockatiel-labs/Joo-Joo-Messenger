@@ -14,6 +14,11 @@ export const AuthResult = {
 
   checkUsernameResponse: t.Boolean(),
 
+  logoutResponse: t.Object({
+    success: t.Literal(true),
+    message: t.String(),
+  }),
+
   errorResponse: t.Object({
     success: t.Literal(false),
     message: t.String(),
