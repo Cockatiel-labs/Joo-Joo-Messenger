@@ -1,12 +1,27 @@
+import { usernameRegex } from "@cockatiel/shared/constants/regex";
 import { checkUsernameQuery, signinSchema, signupSchema } from "@cockatiel/shared/schemas/auth/auth.schema";
 import { Elysia } from "elysia";
+import { accessTokenCookieOptions } from "../../constants/cookie";
+import { ACCESS_TOKEN_EXP } from "../../constants/jwt";
+import { authGuard } from "../../guards/auth.guard";
+import { jwtConfig } from "../../plugins/jwt";
 import { AuthResult } from "./model";
 import { getIsUsernameAvailable, signIn, signup } from "./service";
 
 export const auth = new Elysia({ prefix: "/v1/auth" })
+  .use(jwtConfig)
   .get(
     "/check-username",
     async ({ query: { username }, set }) => {
+      if (!usernameRegex.test(username)) {
+        set.status = 400;
+
+        return {
+          success: false,
+          message: "Username must start with a letter and contain only letters, numbers, and underscores",
+        };
+      }
+
       try {
         return getIsUsernameAvailable(username);
       } catch (error) {
@@ -23,17 +38,138 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
       query: checkUsernameQuery,
       response: {
         200: AuthResult.checkUsernameResponse,
+        400: AuthResult.errorResponse,
+        500: AuthResult.errorResponse,
+      },
+    },
+  )
+  .group("/profile", (app) =>
+    app.use(authGuard).get("/", async ({ payload }) => {
+      return payload;
+    }),
+  )
+  .post(
+    "/sign-up",
+    async ({ jwt, body, cookie: { accessToken }, set }) => {
+      try {
+        const user = await signup(body);
+
+        if (!user) {
+          set.status = 409;
+
+          return {
+            success: false,
+            message: "Username already exists",
+          };
+        }
+
+        const token = await jwt.sign({
+          sub: user.id,
+          exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP, // 15 min
+        });
+
+        accessToken.set({
+          value: token,
+          ...accessTokenCookieOptions,
+        });
+
+        set.status = 201;
+        return {
+          success: true,
+          message: "User created Successfully",
+          data: {
+            user: {
+              id: user.id,
+              username: user.username,
+            },
+          },
+        };
+      } catch (error) {
+        console.error("Sign-up error:", error);
+
+        set.status = 500;
+        return {
+          success: false,
+          message: "Internal server error",
+        };
+      }
+    },
+    {
+      body: signupSchema,
+      response: {
+        201: AuthResult.authResponse,
+        409: AuthResult.errorResponse,
+        500: AuthResult.errorResponse,
+      },
+    },
+  )
+  .group("/profile", (app) =>
+    app.use(authGuard).get("/", async ({ payload }) => {
+      return payload;
+    }),
+  )
+  .post(
+    "/sign-up",
+    async ({ jwt, body, cookie: { accessToken }, set }) => {
+      try {
+        const user = await signup(body);
+
+        if (!user) {
+          set.status = 409;
+
+          return {
+            success: false,
+            message: "Username already exists",
+          };
+        }
+
+        const token = await jwt.sign({
+          sub: user.id,
+          exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP, // 15 min
+        });
+
+        accessToken.set({
+          value: token,
+          ...accessTokenCookieOptions,
+        });
+
+        set.status = 201;
+        return {
+          success: true,
+          message: "User created Successfully",
+          data: {
+            user: {
+              id: user.id,
+              username: user.username,
+            },
+          },
+        };
+      } catch (error) {
+        console.error("Sign-up error:", error);
+
+        set.status = 500;
+        return {
+          success: false,
+          message: "Internal server error",
+        };
+      }
+    },
+    {
+      body: signupSchema,
+      response: {
+        201: AuthResult.authResponse,
+        409: AuthResult.errorResponse,
         500: AuthResult.errorResponse,
       },
     },
   )
   .post(
     "/sign-in",
-    async ({ body, set }) => {
+    async ({ jwt, body, cookie: { accessToken }, set }) => {
       try {
-        const response = await signIn(body);
+        const user = await signIn(body);
 
-        if (!response.success) {
+        if (!user) {
           set.status = 401;
           return {
             success: false,
@@ -41,10 +177,25 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
           };
         }
 
+        const token = await jwt.sign({
+          sub: user.id,
+          exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP, // 15 min
+        });
+
+        accessToken.set({
+          value: token,
+          ...accessTokenCookieOptions,
+        });
+
         return {
           success: true,
           message: "Login Successfully",
-          data: response.data,
+          data: {
+            user: {
+              id: user.id,
+              username: user.username,
+            },
+          },
         };
       } catch (error) {
         console.error("Sign-in error:", error);
@@ -66,41 +217,23 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
     },
   )
   .post(
-    "/sign-up",
-    async ({ body, set }) => {
-      try {
-        const response = await signup(body);
+    "/logout",
+    async ({ cookie: { accessToken } }) => {
+      accessToken.set({
+        value: "",
+        ...accessTokenCookieOptions,
+        maxAge: 0, // overwrite
+        expires: new Date(0), // overwrite
+      });
 
-        if (!response.success) {
-          set.status = response.message === "Username already exists" ? 409 : 400;
-          return {
-            success: false,
-            message: response.message,
-          };
-        }
-
-        set.status = 201;
-        return {
-          success: true,
-          message: response.message,
-          data: response.data,
-        };
-      } catch (error) {
-        console.error("Sign-up error:", error);
-
-        set.status = 500;
-        return {
-          success: false,
-          message: "Internal server error",
-        };
-      }
+      return {
+        success: true,
+        message: "Logged out successfully",
+      };
     },
     {
-      body: signupSchema,
       response: {
-        200: AuthResult.authResponse,
-        401: AuthResult.errorResponse,
-        500: AuthResult.errorResponse,
+        200: AuthResult.logoutResponse,
       },
     },
   );

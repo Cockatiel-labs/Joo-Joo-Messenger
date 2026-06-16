@@ -14,12 +14,8 @@ export const pool = new Pool({
 export const db = drizzle(pool, { schema });
 
 // Monitor pool health
-pool.on("connect", () => {
-  console.log("New client connected to pool");
-});
-
-pool.on("error", (err) => {
-  console.error("Unexpected pool error:", err);
+pool.on("error", (error) => {
+  console.error("Unexpected pool error:", error);
 });
 
 // Graceful shutdown for app termination

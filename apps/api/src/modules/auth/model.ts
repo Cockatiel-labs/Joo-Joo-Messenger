@@ -9,11 +9,15 @@ export const AuthResult = {
         id: t.String(),
         username: t.String(),
       }),
-      token: t.String(),
     }),
   }),
 
   checkUsernameResponse: t.Boolean(),
+
+  logoutResponse: t.Object({
+    success: t.Literal(true),
+    message: t.String(),
+  }),
 
   errorResponse: t.Object({
     success: t.Literal(false),

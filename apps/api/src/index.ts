@@ -2,7 +2,9 @@ import cors from "@elysia/cors";
 import { Elysia } from "elysia";
 import { envConfig } from "./config/env";
 import { auth } from "./modules/auth";
-import { health } from "./modules/health";
+import { checkDatabaseHealth } from "./modules/health/database";
+
+await checkDatabaseHealth();
 
 const app = new Elysia({ prefix: "/api" })
   .use(
@@ -12,7 +14,6 @@ const app = new Elysia({ prefix: "/api" })
       credentials: true,
     }),
   )
-  .use(health)
   .use(auth)
   .listen(envConfig.PORT);
 
