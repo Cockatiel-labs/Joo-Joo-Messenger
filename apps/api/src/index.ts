@@ -6,7 +6,7 @@ import { checkDatabaseHealth } from "./modules/health/database";
 
 await checkDatabaseHealth();
 
-const app = new Elysia({ prefix: "/api" })
+export const app = new Elysia({ prefix: "/api" })
   .use(
     cors({
       origin: envConfig.ORIGIN,
