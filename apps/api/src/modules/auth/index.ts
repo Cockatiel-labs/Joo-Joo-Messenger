@@ -1,16 +1,17 @@
 import { usernameRegex } from "@cockatiel/shared/constants/regex";
 import { checkUsernameQuery, signinSchema, signupSchema } from "@cockatiel/shared/schemas/auth/auth.schema";
 import { Elysia } from "elysia";
-import { accessTokenCookieOptions } from "../../constants/cookie";
-import { ACCESS_TOKEN_EXP } from "../../constants/jwt";
+import { accessTokenCookieOptions, refreshTokenCookieOptions } from "../../constants/cookie";
+import { ACCESS_TOKEN_EXP, REFRESH_TOKEN_EXP } from "../../constants/jwt";
 import { authGuard } from "../../guards/auth.guard";
-import { jwtConfig } from "../../plugins/jwt";
+import { accessJwtConfig, refreshJwtConfig } from "../../plugins/jwt";
 import { authRateLimit, mediumRateLimit } from "../../plugins/rate-limiter";
 import { AuthResult } from "./model";
 import { getIsUsernameAvailable, signIn, signup } from "./service";
 
 export const auth = new Elysia({ prefix: "/v1/auth" })
-  .use(jwtConfig)
+  .use(accessJwtConfig)
+  .use(refreshJwtConfig)
   .group("", (app) =>
     app.use(mediumRateLimit).get(
       "/check-username",
@@ -57,7 +58,7 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
       .use(authRateLimit)
       .post(
         "/sign-up",
-        async ({ jwt, body, cookie: { accessToken }, set }) => {
+        async ({ accessJwtNamespace, body, cookie: { accessToken, refreshToken }, set }) => {
           try {
             const user = await signup(body);
 
@@ -70,14 +71,24 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
               };
             }
 
-            const token = await jwt.sign({
+            const accessJwtToken = await accessJwtNamespace.sign({
               sub: user.id,
-              exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP, // 15 min
+              exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP, // 15 minutes
+            });
+
+            const refreshJwt = await accessJwtNamespace.sign({
+              sub: user.id,
+              exp: Math.floor(Date.now() / 1000) + REFRESH_TOKEN_EXP, // 7 days
             });
 
             accessToken.set({
-              value: token,
+              value: accessJwtToken,
               ...accessTokenCookieOptions,
+            });
+
+            refreshToken.set({
+              value: refreshJwt,
+              ...refreshTokenCookieOptions,
             });
 
             set.status = 201;
@@ -112,7 +123,7 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
       )
       .post(
         "/sign-in",
-        async ({ jwt, body, cookie: { accessToken }, set }) => {
+        async ({ accessJwtNamespace, refreshJwtNamespace, body, cookie: { accessToken, refreshToken }, set }) => {
           try {
             const user = await signIn(body);
 
@@ -124,14 +135,24 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
               };
             }
 
-            const token = await jwt.sign({
+            const accessJwt = await accessJwtNamespace.sign({
               sub: user.id,
-              exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP, // 15 min
+              exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP, // 15 minutes
+            });
+
+            const refreshJwt = await refreshJwtNamespace.sign({
+              sub: user.id,
+              exp: Math.floor(Date.now() / 1000) + REFRESH_TOKEN_EXP, // 7 days
             });
 
             accessToken.set({
-              value: token,
+              value: accessJwt,
               ...accessTokenCookieOptions,
+            });
+
+            refreshToken.set({
+              value: refreshJwt,
+              ...refreshTokenCookieOptions,
             });
 
             return {
@@ -167,12 +188,19 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
 
   .post(
     "/logout",
-    async ({ cookie: { accessToken } }) => {
+    async ({ cookie: { accessToken, refreshToken } }) => {
       accessToken.set({
         value: "",
         ...accessTokenCookieOptions,
         maxAge: 0, // overwrite
-        expires: new Date(0), // overwrite
+        expires: new Date(0),
+      });
+
+      refreshToken.set({
+        value: "",
+        ...refreshTokenCookieOptions,
+        maxAge: 0, // overwrite
+        expires: new Date(0),
       });
 
       return {
@@ -185,4 +213,42 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
         200: AuthResult.logoutResponse,
       },
     },
-  );
+  )
+  .post("/refresh", async ({ refreshJwtNamespace, accessJwtNamespace, cookie: { refreshToken, accessToken }, set }) => {
+    const token = refreshToken.value as string | undefined;
+
+    if (!token) {
+      set.status = 401;
+
+      return {
+        success: false,
+        message: "Refresh token missing",
+      };
+    }
+
+    const payload = await refreshJwtNamespace.verify(token);
+
+    if (!payload) {
+      set.status = 401;
+
+      return {
+        success: false,
+        message: "Invalid refresh token",
+      };
+    }
+
+    const newAccessToken = await accessJwtNamespace.sign({
+      sub: payload.sub,
+      exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP,
+    });
+
+    accessToken.set({
+      value: newAccessToken,
+      ...accessTokenCookieOptions,
+    });
+
+    return {
+      success: true,
+      message: "Access token refreshed",
+    };
+  });
