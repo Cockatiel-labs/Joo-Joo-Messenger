@@ -148,7 +148,7 @@ This is the best time to get involved and help shape the project.
 
 ```bash
 git clone https://github.com/Cockatiel-labs/Joo-Joo-Messenger.git
-cd Joo-joo-Messenger
+cd Joo-Joo-Messenger
 ```
 
 ### Install dependencies
