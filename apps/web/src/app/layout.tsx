@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import { QueryProvider } from "@/providers/query-provider";
 
 export const metadata: Metadata = {
-  title: "Cockatiel Messenger",
+  title: "Joo-joo Messenger",
   description: "A modern, privacy-first, open-source messaging platform",
 };
 
@@ -14,9 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <QueryProvider>
-        <body className="min-h-full flex flex-col">{children}</body>
-      </QueryProvider>
+      <body className="min-h-full flex flex-col">
+        <QueryProvider>{children}</QueryProvider>
+      </body>
     </html>
   );
 }

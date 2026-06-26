@@ -1,7 +1,7 @@
 ---
 
 name: Feature Request
-about: Suggest a new feature or improvement for Cockatiel Messenger
+about: Suggest a new feature or improvement for Joo-joo Messenger
 title: "[Feature]: "
 labels: enhancement
 ---

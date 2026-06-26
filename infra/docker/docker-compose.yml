@@ -12,8 +12,13 @@ services:
     image: postgres:17-bookworm # Stable PostgreSQL image (Debian-based)
     restart: unless-stopped # Restart unless manually stopped
 
-    expose:
-      - "5432"
+    # Expose PostgreSQL to host machine for local development.
+    # expose:
+    #   - "5432"
+  
+    # Remove this section in production deployments.
+    ports:
+      - "5432:5432"
 
     environment:
       POSTGRES_DB: ${POSTGRES_DB}

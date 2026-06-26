@@ -1,7 +1,7 @@
 ---
 
 name: Bug Report
-about: Report a bug or unexpected behavior in Cockatiel Messenger
+about: Report a bug or unexpected behavior in Joo-joo Messenger
 title: "[Bug]: "
 labels: bug
 ---
@@ -28,7 +28,7 @@ A clear and concise description of the actual behavior.
 
 ## Version
 
-If applicable, provide the Cockatiel version, commit hash, or branch name.
+If applicable, provide the Joo-joo version, commit hash, or branch name.
 
 Example:
 

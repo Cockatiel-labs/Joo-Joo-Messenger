@@ -1,74 +1,128 @@
-# Cockatiel Messenger
+# Joo-joo Messenger
 
-![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)
-![Status](https://img.shields.io/badge/status-active_development-orange)
+<p align="center">
+  <img src="./docs/images/onboarding-preview.png" alt="Jojo Messenger onboarding preview" width="100%" />
+</p>
 
-Privacy-first open source messenger built with Next.js and TypeScript.
+<p align="center">
+  <strong>Privacy-first open source messenger built with Next.js, Bun, and Elysia.</strong>
+</p>
 
-No ads. No tracking. No data harvesting.
+<p align="center">
+  No ads • No tracking • Community driven
+</p>
 
-Cockatiel was created for people who believe communication should be simple, respectful, and transparent.
+<p align="center">
+  <img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0" />
+  <img src="https://img.shields.io/badge/status-active_development-orange" alt="Status: active development" />
+  <img src="https://img.shields.io/badge/contributions-welcome-brightgreen" alt="Contributions welcome" />
+</p>
 
-Built in public. Shaped by the community.
+---
 
-> Communication should serve people, not platforms.
+## Why Jojo Messenger?
+
+Most messaging platforms ask people to trade privacy for convenience.
+
+Jojo Messenger is being built to show that modern communication can be:
+
+- Private
+- Open source
+- Community driven
+- Transparent
+- Self-hostable
+
+The goal is simple: build a messenger that belongs to its users, not advertisers.
+
+---
 
 ## Current Status
 
-⚠️ Cockatiel Messenger is currently under active development.
+⚠️ **Active development**
 
-- Rapid changes are expected.
-- Features may change without notice.
-- Not ready for production use.
+Jojo Messenger is under heavy development and is not production ready yet.
+
+Expect rapid changes, evolving APIs, and ongoing design improvements.
+
+This is the best time to get involved and help shape the project.
+
+---
 
 ## Features
 
-- [x] Open source
-- [ ] Self-hostable
-- [ ] Modern messaging experience
-- [ ] Real-time communication
-- [ ] End-to-end encryption (planned)
+### Implemented
 
-## Mission
+- [x] Open source monorepo
+- [x] Authentication flow
+- [x] Responsive onboarding experience
+- [x] Modern UI built with Tailwind CSS and shadcn/ui
 
-To build a messaging platform where privacy comes first, communities matter, and users remain in control.
+### In Progress
 
-## Core Values
+- [ ] Real-time messaging
+- [ ] Conversations and direct messages
+- [ ] Presence and online status
+- [ ] File uploads
+- [ ] User profiles
 
-### Privacy by Design
+### Planned
 
-Privacy is a fundamental expectation.
+- [ ] End-to-end encryption
+- [ ] Self-hosting support
+- [ ] Group chats
+- [ ] Push notifications
+- [ ] Desktop client
 
-Cockatiel is being designed with privacy in mind from the very beginning, not added later as an afterthought.
+---
 
-### People Before Platforms
+## Roadmap
 
-Technology should serve people.
+### Phase 1 — Foundation
 
-The goal of Cockatiel is to create a communication platform that respects its users rather than exploiting them.
+- Authentication
+- User management
+- Profiles
+- Infrastructure and deployment
 
-### Freedom with Responsibility
+### Phase 2 — Messaging
 
-Healthy communities require both freedom and respect.
+- Conversations
+- Direct messages
+- Realtime communication
+- Presence
 
-Cockatiel aims to provide an environment where people can communicate openly while maintaining a welcoming and responsible space for everyone.
+### Phase 3 — Privacy
 
-## Technology Stack
+- End-to-end encryption
+- Key management
+- Secure backups
+
+### Phase 4 — Community
+
+- Self-hosting
+- Plugins
+- Federation research
+- Better contributor tooling
+
+---
+
+## Tech Stack
 
 ### Backend
 
 - Bun
 - Elysia
-- WebSockets
 - PostgreSQL
 - Drizzle ORM
 - Redis
+- WebSockets
 - Nginx
 
 ### Frontend
 
 - Next.js
 - React
+- TypeScript
 - TanStack Query
 - Zustand
 - Tailwind CSS
@@ -80,6 +134,8 @@ Cockatiel aims to provide an environment where people can communicate openly whi
 - Docker Compose
 - GitHub Actions
 
+---
+
 ## Getting Started
 
 ### Requirements
@@ -88,56 +144,109 @@ Cockatiel aims to provide an environment where people can communicate openly whi
 - Docker
 - Docker Compose
 
-### Clone the Repository
+### Clone the repository
 
 ```bash
-git clone https://github.com/Cockatiel-labs/Cockatiel-Messenger.git
-cd Cockatiel-Messenger
+git clone https://github.com/Cockatiel-labs/Joo-Joo-Messenger.git
+cd Joo-Joo-Messenger
 ```
 
-### Environment Variables
-
-Copy the example environment file:
-
-```bash
-cp .env.example .env
-```
-
-Then update the values in `.env` as needed.
-
-### Install Dependencies
+### Install dependencies
 
 ```bash
 bun install
 ```
 
-### Start Infrastructure Services
+### Configure environment variables
+
+```bash
+cp .env.example .env
+```
+
+Update the values in `.env` to match your local setup.
+
+### Start infrastructure services
 
 ```bash
 docker compose -f ./infra/docker/docker-compose.yml up -d
 ```
 
-### Run the Backend
+### Run the backend
 
 ```bash
 bun run dev:api
 ```
 
-### Run the Frontend
+### Run the frontend
 
 ```bash
 bun run dev:web
 ```
 
-## Documentation
-
-Additional documentation can be found in the `/docs` directory.
+---
 
 ## Contributing
 
-Contributions, ideas, and feedback are welcome.
+Contributions, ideas, bug reports, design feedback, and documentation improvements are all welcome.
 
-Please read `CONTRIBUTING.md` before opening a pull request.
+If you are new to the project, a great place to start is:
+
+- `good first issue`
+- `help wanted`
+- documentation tasks
+- UI polish
+- bug fixes
+
+### Before you open a pull request
+
+Please:
+
+1. Read [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+2. Search existing issues first
+3. Keep changes focused
+4. Run formatting and linting
+5. Update documentation when needed
+
+---
+
+## Community Help Wanted
+
+The project would especially benefit from help in these areas:
+
+### Frontend
+
+- Responsive layouts
+- Accessibility improvements
+- Design system consistency
+- Onboarding flow polish
+
+### Backend
+
+- Messaging architecture
+- WebSocket handling
+- Performance improvements
+- API structure
+
+### Security
+
+- Authentication review
+- Encryption design
+- Security audits
+
+### Documentation
+
+- Setup guides
+- Architecture notes
+- API usage examples
+- Contributor onboarding
+
+---
+
+## Documentation
+
+Additional documentation can be found in the `docs/` directory as the project grows.
+
+---
 
 ## License
 

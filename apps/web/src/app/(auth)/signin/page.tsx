@@ -1,6 +1,6 @@
 "use client";
 
-import type { SigninInput } from "@cockatiel/shared/schemas/auth/auth.schema";
+import type { SigninInput } from "@joo-joo/shared/schemas/auth/auth.schema";
 import { AlertCircle, Eye, EyeOff, LucideProvider } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,7 +33,7 @@ export default function Signin() {
         <div className="mb-6 text-center">
           <Image
             src="/images/logo.png"
-            alt="Cockatiel Messenger"
+            alt="Joo-joo Messenger"
             width={64}
             height={64}
             loading="eager"

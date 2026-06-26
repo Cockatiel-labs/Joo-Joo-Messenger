@@ -1,27 +1,30 @@
-# Contributing to Cockatiel Messenger
+# Contributing to Joo-joo Messenger
 
-First of all, thank you for your interest in contributing to Cockatiel Messenger.
+Thank you for your interest in contributing to Joo-joo Messenger.
 
-Cockatiel is an open-source, privacy-first messaging platform built in public. Contributions of all sizes are welcome, whether it's reporting bugs, improving documentation, suggesting ideas, or submitting code changes.
+This project is open source, privacy-focused, and community driven. Contributions of all sizes are welcome, including bug reports, documentation improvements, design feedback, testing, and code changes.
 
 ## Ways to Contribute
 
-You can help the project by:
+You can help by:
 
 - Reporting bugs
-- Suggesting new features
+- Suggesting features
 - Improving documentation
-- Reviewing code and pull requests
+- Reviewing pull requests
 - Fixing issues
-- Implementing new features
+- Improving UX and accessibility
+- Sharing feedback on architecture and product direction
 
-## Before You Start
+## Where to Start
 
-Before opening a new issue, please:
+If you are new to the project, look for issues labeled:
 
-- Search existing issues and discussions to avoid duplicates
-- Check the project roadmap
-- Make sure your proposal aligns with the project's goals
+- `good first issue`
+- `help wanted`
+- `documentation`
+
+These are the easiest entry points for first-time contributors.
 
 ## Development Setup
 
@@ -31,76 +34,92 @@ Before opening a new issue, please:
 - Docker
 - Docker Compose
 
-### Clone the Repository
+### Clone the repository
 
 ```bash
-git clone https://github.com/Cockatiel-labs/Cockatiel-Messenger.git
-cd Cockatiel-Messenger
+git clone https://github.com/Cockatiel-labs/Joo-Joo-Messenger.git
+cd Joo-joo-Messenger
 ```
 
-### Environment Variables
-
-Copy the example environment file:
-
-```bash
-cp .env.example .env
-```
-
-Then update the values in `.env` as needed.
-
-### Install Dependencies
+### Install dependencies
 
 ```bash
 bun install
 ```
 
-### Start Infrastructure Services
+### Configure environment variables
+
+```bash
+cp .env.example .env
+```
+
+Then update the values in `.env` for your local environment.
+
+### Start infrastructure services
 
 ```bash
 docker compose -f ./infra/docker/docker-compose.yml up -d
 ```
 
-### Run the Backend
+### Run the backend
 
 ```bash
 bun run dev:api
 ```
 
-### Run the Frontend
+### Run the frontend
 
 ```bash
 bun run dev:web
 ```
 
-## Pull Requests
+## Code Style
 
-When submitting a pull request:
+This repository uses Biome for formatting and linting.
 
-- Keep changes focused and reasonably scoped
-- Link related issues whenever possible
-- Update documentation when necessary
-- Ensure the project builds successfully
-- Respond to review feedback constructively
+Before opening a pull request, run:
 
-## Coding Guidelines
+```bash
+bun run format
+bun run lint
+```
 
-- Write clear and maintainable code
-- Prefer readability over cleverness
-- Follow existing project conventions
-- Avoid introducing unnecessary dependencies
+## Pull Request Guidelines
 
-## Questions and Discussions
+Please:
 
-For questions, ideas, and general conversations, please use GitHub Discussions.
+- Open pull requests against the `develop` branch
+- Keep changes small and focused
+- Link the related issue when possible
+- Update documentation if behavior changes
+- Make sure the project still builds
+- Respond to review feedback kindly and clearly
 
-If you've identified a bug or have a specific task that requires action, please open an Issue instead.
+## Issue Guidelines
 
-If you're unsure where your topic belongs, start a Discussion first.
+When opening an issue, include enough context to understand the problem or request.
 
-## Code of Conduct
+For bugs, please include:
 
-Please be respectful and constructive when interacting with other contributors.
+- Steps to reproduce
+- Expected behavior
+- Actual behavior
+- Screenshots or logs if available
 
-We aim to build an open, welcoming, and collaborative community.
+For feature requests, please explain:
 
-Thank you for helping improve Cockatiel Messenger.
+- The problem being solved
+- The proposed solution
+- Any alternatives you considered
+
+## Communication
+
+Use GitHub Discussions for questions, general ideas, and conversations that do not require an issue.
+
+If something is clearly a bug or requires action, open an issue instead.
+
+## Thank You
+
+Every contribution helps move the project forward.
+
+Thanks for helping build Joo-joo Messenger.

@@ -1,4 +1,4 @@
-import type { SigninInput, SignupInput } from "@cockatiel/shared/schemas/auth/auth.schema";
+import type { SigninInput, SignupInput } from "@joo-joo/shared/schemas/auth/auth.schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 

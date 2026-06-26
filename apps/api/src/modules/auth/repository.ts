@@ -10,6 +10,16 @@ export async function isUsernameAvailable(username: string) {
   return user === undefined;
 }
 
+export async function getUserById(id: string) {
+  return db.query.users.findFirst({
+    columns: {
+      id: true,
+      username: true,
+    },
+    where: (user, { eq }) => eq(user.id, id),
+  });
+}
+
 export async function getUserByUsername(username: string) {
   return db.query.users.findFirst({
     columns: {

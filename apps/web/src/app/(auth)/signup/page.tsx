@@ -1,7 +1,7 @@
 "use client";
 
-import { type SignupInput, signupSchema } from "@cockatiel/shared/schemas/auth/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { type SignupInput, signupSchema } from "@joo-joo/shared/schemas/auth/auth.schema";
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, LucideProvider } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -65,14 +65,14 @@ export default function Signup() {
         <div className="text-center mb-6">
           <Image
             src="/images/logo.png"
-            alt="Cockatiel Messenger"
+            alt="Joo-joo Messenger"
             width={64}
             height={64}
             loading="eager"
             className="size-16 mx-auto"
           />
           <h1 className="text-3xl font-bold mt-4">Create your account</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Join Cockatiel Messenger and start secure conversations</p>
+          <p className="mt-2 text-sm text-muted-foreground">Join Joo-joo Messenger and start secure conversations</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

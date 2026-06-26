@@ -1,5 +1,5 @@
 {
-  "name": "@cockatiel/api",
+  "name": "@joo-joo/api",
   "private": true,
   "scripts": {
     "dev": "bun run --watch src/index.ts",
@@ -11,11 +11,13 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@cockatiel/shared": "workspace:*",
+    "@joo-joo/shared": "workspace:*",
     "@elysia/cors": "^1.4.2",
+    "@elysia/jwt": "^1.4.2",
     "drizzle-orm": "^0.45.2",
     "drizzle-typebox": "^0.3.3",
     "elysia": "latest",
+    "elysia-rate-limit": "^4.6.2",
     "pg": "^8.21.0",
     "uuid": "^14.0.0"
   },

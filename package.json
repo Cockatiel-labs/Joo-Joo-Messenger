@@ -1,5 +1,5 @@
 {
-  "name": "cockatiel-messenger",
+  "name": "joo-joo-messenger",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -8,10 +8,10 @@
   "scripts": {
     "lint": "biome check .",
     "format": "biome format --write .",
-    "dev:web": "bun --filter @cockatiel/web dev",
-    "dev:api": "bun --filter @cockatiel/api dev",
-    "build:web": "bun --filter @cockatiel/web build",
-    "build:api": "bun --filter @cockatiel/api build"
+    "dev:web": "bun --filter @joo-joo/web dev",
+    "dev:api": "bun --filter @joo-joo/api dev",
+    "build:web": "bun --filter @joo-joo/web build",
+    "build:api": "bun --filter @joo-joo/api build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.16"
