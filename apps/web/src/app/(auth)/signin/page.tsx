@@ -1,6 +1,7 @@
 "use client";
 
-import type { SigninInput } from "@joo-joo/shared/schemas/auth/auth.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { type SigninInput, signinSchema } from "@joo-joo/shared/schemas/auth/auth.schema";
 import { AlertCircle, Eye, EyeOff, LucideProvider } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,6 +21,7 @@ export default function Signin() {
     handleSubmit,
     formState: { errors },
   } = useForm<SigninInput>({
+    resolver: zodResolver(signinSchema),
     mode: "onChange",
   });
 
@@ -55,9 +57,7 @@ export default function Signin() {
                 type="text"
                 autoComplete="username"
                 placeholder="Enter your username"
-                {...register("username", {
-                  required: "Username is required",
-                })}
+                {...register("username")}
               />
 
               {errors.username && (
@@ -76,9 +76,7 @@ export default function Signin() {
                   type={isShowPassword ? "text" : "password"}
                   autoComplete="current-password"
                   placeholder="Enter your password"
-                  {...register("password", {
-                    required: "Password is required",
-                  })}
+                  {...register("password")}
                 />
                 <LucideProvider size={24} strokeWidth={1.5} className="absolute top-2.75 right-2.5 cursor-pointer">
                   <button
