@@ -1,5 +1,6 @@
 import { db } from "../../db";
-import { users } from "../../db/schema";
+import { eq } from "drizzle-orm";
+import { users, sessions } from "../../db/schema";
 
 export async function isUsernameAvailable(username: string) {
   const user = await db.query.users.findFirst({
@@ -38,4 +39,34 @@ export async function createUser(data: { username: string; password: string }) {
   });
 
   return user;
+}
+// [UPDATED] - Session and password functions added below
+
+export async function updateUserPassword(userId: string, passwordHash: string) {
+  await db.update(users).set({ password: passwordHash }).where(eq(users.id, userId));
+}
+
+export async function createSession(data: { userId: string; userAgent?: string }) {
+  const [session] = await db.insert(sessions).values(data).returning();
+  return session;
+}
+
+export async function getSessionById(id: string) {
+  return db.query.sessions.findFirst({
+    where: (session, { eq }) => eq(session.id, id),
+  });
+}
+
+export async function deleteSession(id: string) {
+  await db.delete(sessions).where(eq(sessions.id, id));
+}
+
+export async function deleteAllSessionsForUser(userId: string) {
+  await db.delete(sessions).where(eq(sessions.userId, userId));
+}
+
+export async function getAllSessionsForUser(userId: string) {
+  return db.query.sessions.findMany({
+    where: (session, { eq }) => eq(session.userId, userId),
+  });
 }

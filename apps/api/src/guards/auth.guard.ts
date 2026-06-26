@@ -15,9 +15,16 @@ export const authGuard = new Elysia({ name: "authGuard" })
       throw status(401, "Unauthorized");
     }
 
-    const payload: { sub: string; exp: number; iat: number } | false = await accessJwtNamespace.verify(token);
+    const payload: { sub: string; sessionId: string;exp: number; iat: number } | false = await accessJwtNamespace.verify(token);
 
     if (!payload) {
+      throw status(401, "Unauthorized");
+    }
+    // [UPDATED] - Fetch session from DB to ensure it's still active
+    const { getSessionById } = await import("../modules/auth/repository");
+    const session = await getSessionById(payload.sessionId);
+
+    if (!session) {
       throw status(401, "Unauthorized");
     }
 

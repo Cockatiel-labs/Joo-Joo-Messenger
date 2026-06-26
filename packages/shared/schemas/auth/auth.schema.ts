@@ -38,6 +38,23 @@ export const checkUsernameQuery = z.object({
     .min(3, "Username must be at least 3 characters")
     .max(30, "Username must be at most 30 characters"),
 });
+// [UPDATED] - Added for issue #39
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string({ error: "Current password is required" }).min(1),
+    newPassword: passwordSchema,
+    confirmNewPassword: z.string({ error: "Please confirm your new password" }),
+  })
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
+    path: ["confirmNewPassword"],
+    message: "Passwords do not match",
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    path: ["newPassword"],
+    message: "New password must be different from current password",
+  });
+
+export type changePasswordSchema = z.infer<typeof changePasswordSchema>;
 
 export type SignupInput = z.infer<typeof signupSchema>;
 export type SigninInput = z.infer<typeof signinSchema>;

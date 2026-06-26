@@ -40,3 +40,25 @@ export async function signup(body: SignupInput) {
     return null;
   }
 }
+// [UPDATED] - Added changePassword feature
+export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  const user = await repository.getUserById(userId);
+  if (!user) return false;
+
+  const userWithPassword = await repository.getUserByUsername(user.username);
+  if (!userWithPassword) return false;
+
+  const isMatch = await Bun.password.verify(currentPassword, userWithPassword.password);
+  if (!isMatch) return false;
+
+  const argonHash = await Bun.password.hash(newPassword, {
+    algorithm: "argon2id",
+    memoryCost: 1024 * 64, // 64MiB
+    timeCost: 3,
+  });
+
+  await repository.updateUserPassword(userId, argonHash);
+  await repository.deleteAllSessionsForUser(userId);
+
+  return true;
+}
