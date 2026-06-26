@@ -27,7 +27,7 @@ jobs:
       - name: Build frontend
         run: bun run build:web
         env:
-          NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+          NEXT_PUBLIC_BASE_URL: ${{ vars.NEXT_PUBLIC_BASE_URL }}
 
       - name: Build backend
         run: bun run build:api
