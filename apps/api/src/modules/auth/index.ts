@@ -27,7 +27,7 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
         }
 
         try {
-          return getIsUsernameAvailable(username);
+          return await getIsUsernameAvailable(username);
         } catch (error) {
           console.error("Check-username error:", error);
 
