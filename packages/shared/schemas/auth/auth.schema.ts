@@ -36,7 +36,8 @@ export const checkUsernameQuery = z.object({
     .trim()
     .toLowerCase()
     .min(3, "Username must be at least 3 characters")
-    .max(30, "Username must be at most 30 characters"),
+    .max(30, "Username must be at most 30 characters")
+    .regex(usernameRegex, "Username must start with a letter and contain only letters, numbers, and underscores"),
 });
 
 export type SignupInput = z.infer<typeof signupSchema>;
