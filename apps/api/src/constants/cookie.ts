@@ -8,7 +8,7 @@ import { ACCESS_TOKEN_EXP, REFRESH_TOKEN_EXP } from "./jwt";
  * different origins. Using Strict there would prevent cookies from being sent
  * on the very first navigation from the frontend to the API, breaking the
  * auth flow. Lax is safe here because CSRF protection is enforced via the
- * double-submit token pattern on all state-changing routes.
+ * server-side token pattern on all state-changing routes.
  *
  * In production we use Strict for maximum cross-origin protection, assuming
  * the deployment is configured so that the frontend and API are same-site
@@ -36,8 +36,8 @@ export const refreshTokenCookieOptions = {
  * CSRF cookie options.
  *
  * This cookie is intentionally NOT httpOnly so the frontend JavaScript can read it
- * and echo its value back in the `x-csrf-token` header (double-submit-cookie pattern).
- * SameSite matches the auth cookies for consistent cross-origin behavior.
+ * and echo its value back in the `x-csrf-token` header. The server holds the
+ * canonical token; the cookie is only a transport mechanism.
  */
 export const csrfCookieOptions = {
   httpOnly: false,

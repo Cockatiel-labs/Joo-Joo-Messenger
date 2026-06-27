@@ -6,7 +6,7 @@ const SAFE_METHODS = ["GET", "HEAD", "OPTIONS"];
 
 /**
  * Read the `csrf_token` cookie value from document.cookie.
- * The cookie is set by the API on every response (non-httpOnly so JS can read it).
+ * The cookie is set by the API on sign-in/sign-up (non-httpOnly so JS can read it).
  */
 function getCsrfTokenFromCookie(): string | null {
   if (typeof document === "undefined") return null;

@@ -2,7 +2,6 @@ import cors from "@elysia/cors";
 import { Elysia } from "elysia";
 import { envConfig } from "./config/env";
 import { auth } from "./modules/auth";
-import { csrfModule } from "./modules/csrf";
 import { checkDatabaseHealth } from "./modules/health/database";
 import { csrfProtection } from "./plugins/csrf-middleware";
 
@@ -17,7 +16,6 @@ export const app = new Elysia({ prefix: "/api" })
     }),
   )
   .use(csrfProtection)
-  .use(csrfModule)
   .use(auth)
   .listen(envConfig.PORT);
 
