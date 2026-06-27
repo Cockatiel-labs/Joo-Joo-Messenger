@@ -40,6 +40,22 @@ export const checkUsernameQuery = z.object({
     .regex(usernameRegex, "Username must start with a letter and contain only letters, numbers, and underscores"),
 });
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string({ error: "Current password is required" }).min(1),
+    newPassword: passwordSchema,
+    confirmNewPassword: z.string({ error: "Please confirm your new password" }),
+  })
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
+    path: ["confirmNewPassword"],
+    message: "Passwords do not match",
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    path: ["newPassword"],
+    message: "New password must be different from current password",
+  });
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type SigninInput = z.infer<typeof signinSchema>;
 export type CheckUsernameQueryInput = z.infer<typeof checkUsernameQuery>;
+export type changePasswordSchema = z.infer<typeof changePasswordSchema>;
