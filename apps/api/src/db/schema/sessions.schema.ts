@@ -14,8 +14,9 @@ export const sessions = pgTable("sessions", (t) => ({
     .references(() => users.id, { onDelete: "cascade" }),
 
   userAgent: t.varchar("user_agent", { length: 255 }),
-
+  refreshTokenHash: t.varchar("refresh_token_hash", { length: 255 }),
+  expiresAt: t.timestamp("expires_at", { mode: "date", precision: 3, withTimezone: true }),
+  revokedAt: t.timestamp("revoked_at", { mode: "date", precision: 3, withTimezone: true }),
   createdAt: t.timestamp("created_at", { mode: "date", precision: 3, withTimezone: true }).defaultNow().notNull(),
-
   lastUsedAt: t.timestamp("last_used_at", { mode: "date", precision: 3, withTimezone: true }).defaultNow().notNull(),
 }));

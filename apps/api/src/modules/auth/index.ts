@@ -12,13 +12,7 @@ import { authGuard } from "../../guards/auth.guard";
 import { accessJwtConfig, refreshJwtConfig } from "../../plugins/jwt";
 import { authRateLimit, mediumRateLimit, refreshTokenRateLimit } from "../../plugins/rate-limiter";
 import { AuthResult } from "./model";
-import {
-  createSession,
-  deleteSession,
-  getAllSessionsForUser,
-  getSessionById,
-  getUserById,
-} from "./repository";
+import { createSession, deleteSession, getAllSessionsForUser, getSessionById, getUserById } from "./repository";
 import { changePassword, getIsUsernameAvailable, signIn, signup } from "./service";
 
 export const auth = new Elysia({ prefix: "/v1/auth" })
@@ -99,13 +93,13 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
 
             const accessJwtToken = await accessJwtNamespace.sign({
               sub: user.id,
-              sessionId: session.id,
+              sid: session.id,
               exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP,
             });
 
             const refreshJwt = await refreshJwtNamespace.sign({
               sub: user.id,
-              sessionId: session.id,
+              sid: session.id,
               exp: Math.floor(Date.now() / 1000) + REFRESH_TOKEN_EXP,
             });
 
@@ -157,13 +151,13 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
 
             const accessJwt = await accessJwtNamespace.sign({
               sub: user.id,
-              sessionId: session.id,
+              sid: session.id,
               exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP,
             });
 
             const refreshJwt = await refreshJwtNamespace.sign({
               sub: user.id,
-              sessionId: session.id,
+              sid: session.id,
               exp: Math.floor(Date.now() / 1000) + REFRESH_TOKEN_EXP,
             });
 
@@ -198,8 +192,8 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
       "/logout",
       async ({ payload, cookie: { accessToken, refreshToken } }) => {
         // [#37] Delete session from DB on logout
-        if (payload.sessionId) {
-          await deleteSession(payload.sessionId);
+        if (payload.sid) {
+          await deleteSession(payload.sid);
         }
 
         accessToken.set({ value: "", ...accessTokenCookieOptions, maxAge: 0, expires: new Date(0) });
@@ -240,11 +234,7 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
       "/change-password",
       async ({ payload, body, cookie: { accessToken, refreshToken }, set }) => {
         try {
-          const success = await changePassword(
-            payload.sub,
-            body.currentPassword,
-            body.newPassword,
-          );
+          const success = await changePassword(payload.sub, body.currentPassword, body.newPassword);
 
           if (!success) {
             set.status = 400;
@@ -268,41 +258,41 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
 
   // ─── Refresh Token (#37) ──────────────────────────────────────────
   .group("", (app) =>
-    app.use(refreshTokenRateLimit).post(
-      "/refresh",
-      async ({ refreshJwtNamespace, accessJwtNamespace, cookie: { refreshToken, accessToken }, set }) => {
-        const token = refreshToken.value as string | undefined;
+    app
+      .use(refreshTokenRateLimit)
+      .post(
+        "/refresh",
+        async ({ refreshJwtNamespace, accessJwtNamespace, cookie: { refreshToken, accessToken }, set }) => {
+          const token = refreshToken.value as string | undefined;
 
-        if (!token) {
-          set.status = 401;
-          return { success: false, message: "Refresh token missing" };
-        }
+          if (!token) {
+            set.status = 401;
+            return { success: false, message: "Refresh token missing" };
+          }
 
-        const payload = (await refreshJwtNamespace.verify(token)) as
-          | { sub: string; sessionId?: string }
-          | false;
+          const payload = (await refreshJwtNamespace.verify(token)) as { sub: string; sid?: string } | false;
 
-        if (!payload || !payload.sessionId) {
-          set.status = 401;
-          return { success: false, message: "Invalid refresh token" };
-        }
+          if (!payload?.sid) {
+            set.status = 401;
+            return { success: false, message: "Invalid refresh token" };
+          }
 
-        // [#37] Verify session still exists in DB
-        const session = await getSessionById(payload.sessionId);
-        if (!session) {
-          set.status = 401;
-          return { success: false, message: "Session revoked. Please log in again." };
-        }
+          // [#37] Verify session still exists in DB
+          const session = await getSessionById(payload.sid);
+          if (!session) {
+            set.status = 401;
+            return { success: false, message: "Session revoked. Please log in again." };
+          }
 
-        const newAccessToken = await accessJwtNamespace.sign({
-          sub: payload.sub,
-          sessionId: payload.sessionId,
-          exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP,
-        });
+          const newAccessToken = await accessJwtNamespace.sign({
+            sub: payload.sub,
+            sid: payload.sid,
+            exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXP,
+          });
 
-        accessToken.set({ value: newAccessToken, ...accessTokenCookieOptions });
+          accessToken.set({ value: newAccessToken, ...accessTokenCookieOptions });
 
-        return { success: true, message: "Access token refreshed" };
-      },
-    ),
+          return { success: true, message: "Access token refreshed" };
+        },
+      ),
   );

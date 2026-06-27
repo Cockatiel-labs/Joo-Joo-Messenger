@@ -38,7 +38,7 @@ export const checkUsernameQuery = z.object({
     .min(3, "Username must be at least 3 characters")
     .max(30, "Username must be at most 30 characters"),
 });
-// [UPDATED] - Added for issue #39
+
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string({ error: "Current password is required" }).min(1),
@@ -54,8 +54,7 @@ export const changePasswordSchema = z
     message: "New password must be different from current password",
   });
 
-export type changePasswordSchema = z.infer<typeof changePasswordSchema>;
-
 export type SignupInput = z.infer<typeof signupSchema>;
 export type SigninInput = z.infer<typeof signinSchema>;
 export type CheckUsernameQueryInput = z.infer<typeof checkUsernameQuery>;
+export type changePasswordSchema = z.infer<typeof changePasswordSchema>;
