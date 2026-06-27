@@ -27,8 +27,9 @@ function extractCsrfCookie(setCookieHeader: string | null): string | null {
  */
 function getSetCookieHeaders(headers: Headers): string[] {
   // Bun's Headers exposes getSetCookie() in newer versions; fall back to raw.
-  if (typeof (headers as any).getSetCookie === "function") {
-    return (headers as any).getSetCookie();
+  const headersWithGetSetCookie = headers as Headers & { getSetCookie?: () => string[] };
+  if (typeof headersWithGetSetCookie.getSetCookie === "function") {
+    return headersWithGetSetCookie.getSetCookie();
   }
   const raw = headers.get("set-cookie");
   if (!raw) return [];
@@ -94,7 +95,8 @@ describe("csrfProtection middleware", () => {
     // SameSite is environment-aware (strict in production, lax in development).
     expect(csrfCookie?.toLowerCase()).toMatch(/samesite=(strict|lax)/);
     // The cookie must have a non-empty token value.
-    const tokenValue = extractCsrfCookie(csrfCookie!);
+    if (!csrfCookie) throw new Error("Expected csrf_token cookie in GET response");
+    const tokenValue = extractCsrfCookie(csrfCookie);
     expect(tokenValue).toBeTruthy();
     expect(tokenValue?.length).toBeGreaterThan(0);
   });
@@ -184,10 +186,11 @@ describe("csrfProtection middleware", () => {
     const csrfCookieHeader = setCookies.find((c) => c.startsWith("csrf_token="));
     expect(csrfCookieHeader).toBeTruthy();
 
-    const newToken = extractCsrfCookie(csrfCookieHeader!);
+    if (!csrfCookieHeader) throw new Error("Expected csrf_token cookie after POST");
+    const newToken = extractCsrfCookie(csrfCookieHeader);
     expect(newToken).toBeTruthy();
     // The rotated token should verify against the original (same secret, new salt).
-    expect(csrf.verify(newToken!, validToken)).toBe(true);
+    expect(csrf.verify(newToken, validToken)).toBe(true);
     // But it should not be identical (salt changed).
     expect(newToken).not.toBe(validToken);
   });
@@ -236,8 +239,8 @@ describe("CSRF bootstrap endpoint", () => {
     // Cookie must be set.
     const setCookies = getSetCookieHeaders(response.headers);
     const csrfCookie = setCookies.find((c) => c.startsWith("csrf_token="));
-    expect(csrfCookie).toBeTruthy();
-    expect(csrfCookie!.toLowerCase()).toContain("samesite=");
+    if (!csrfCookie) throw new Error("Expected csrf_token cookie in bootstrap response");
+    expect(csrfCookie.toLowerCase()).toContain("samesite=");
 
     // Response body must contain the token.
     const body = (await response.json()) as { success: boolean; csrfToken: string };
@@ -250,17 +253,22 @@ describe("CSRF bootstrap endpoint", () => {
     // Simulate the full flow: GET bootstrap → extract cookie → POST with header.
     const { csrfModule } = await import("../modules/csrf");
 
-    const testApp = new Elysia().use(csrfProtection).use(csrfModule).post("/test", () => ({ ok: true }));
+    const testApp = new Elysia()
+      .use(csrfProtection)
+      .use(csrfModule)
+      .post("/test", () => ({ ok: true }));
 
     // Step 1: Bootstrap.
-    const bootstrapResponse = await testApp.handle(new Request("http://localhost/v1/csrf-token", { method: "GET" }));
+    const bootstrapResponse = await testApp.handle(
+      new Request("http://localhost/v1/csrf-token", { method: "GET" }),
+    );
     expect(bootstrapResponse.status).toBe(200);
 
     const bootstrapCookies = getSetCookieHeaders(bootstrapResponse.headers);
     const csrfCookieHeader = bootstrapCookies.find((c) => c.startsWith("csrf_token="));
-    expect(csrfCookieHeader).toBeTruthy();
-    const token = extractCsrfCookie(csrfCookieHeader!);
-    expect(token).toBeTruthy();
+    if (!csrfCookieHeader) throw new Error("Expected csrf_token cookie in bootstrap response");
+    const token = extractCsrfCookie(csrfCookieHeader);
+    if (!token) throw new Error("Expected non-empty CSRF token in cookie");
 
     // Step 2: Use the token for a POST.
     const postResponse = await testApp.handle(
@@ -268,7 +276,7 @@ describe("CSRF bootstrap endpoint", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-csrf-token": token!,
+          "x-csrf-token": token,
           Cookie: `csrf_token=${token}`,
         },
         body: JSON.stringify({}),
