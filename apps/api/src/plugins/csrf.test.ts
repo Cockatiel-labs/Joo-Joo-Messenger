@@ -8,95 +8,29 @@ process.env.REFRESH_JWT_SECRET = "test-refresh-secret-minimum-32-chars-long!";
 process.env.ORIGIN_ALLOWLIST = "http://localhost:3000";
 
 const { Elysia } = await import("elysia");
-const { csrf } = await import("./csrf");
-const { csrfProtection } = await import("./csrf-middleware");
-const { csrfCookieOptions } = await import("../constants/cookie");
-const { deleteCsrfToken, getCsrfToken, setCsrfToken } = await import("./csrf-store");
+const { modernCsrf } = await import("modern-csrf");
 
-describe("modern-csrf integration", () => {
-  it("csrf.create() returns a token in the expected format", async () => {
-    const token = await csrf.create();
-    expect(typeof token).toBe("string");
-    expect(token).toContain("-");
-    const [secret, salt] = token.split("-");
-    expect(secret.length).toBeGreaterThan(0);
-    expect(salt.length).toBe(4);
+describe("modern-csrf middleware", () => {
+  it("allows safe methods (GET, HEAD, OPTIONS) without checking", async () => {
+    const app = new Elysia()
+      .use(modernCsrf({ trustedOrigins: ["http://localhost:3000"] }))
+      .get("/test", () => ({ ok: true }))
+      .options("/test", () => ({ ok: true }));
+
+    const getRes = await app.handle(new Request("http://localhost/test", { method: "GET" }));
+    expect(getRes.status).toBe(200);
+
+    const optionsRes = await app.handle(new Request("http://localhost/test", { method: "OPTIONS" }));
+    expect(optionsRes.status).toBe(200);
   });
 
-  it("csrf.update() rotates the salt but keeps the secret", async () => {
-    const token = await csrf.create();
-    const [originalSecret] = token.split("-");
-    const updated = csrf.update(token);
-    const [updatedSecret, updatedSalt] = updated.split("-");
-    expect(updatedSecret).toBe(originalSecret);
-    expect(updatedSalt.length).toBe(4);
-    expect(updated).not.toBe(token);
-  });
-
-  it("csrf.verify() returns true for a token and its updated version", async () => {
-    const token = await csrf.create();
-    const updated = csrf.update(token);
-    expect(csrf.verify(token, updated)).toBe(true);
-    expect(csrf.verify(updated, token)).toBe(true);
-  });
-
-  it("csrf.verify() returns false for unrelated tokens", async () => {
-    const token1 = await csrf.create();
-    const token2 = await csrf.create();
-    expect(csrf.verify(token1, token2)).toBe(false);
-  });
-});
-
-describe("csrf-store", () => {
-  it("stores and retrieves a CSRF token by user ID", () => {
-    const userId = "user-123";
-    const token = "test-token-value";
-    setCsrfToken(userId, token);
-    expect(getCsrfToken(userId)).toBe(token);
-  });
-
-  it("returns undefined for unknown user ID", () => {
-    expect(getCsrfToken("nonexistent")).toBeUndefined();
-  });
-
-  it("deletes a stored CSRF token", () => {
-    const userId = "user-456";
-    setCsrfToken(userId, "some-token");
-    deleteCsrfToken(userId);
-    expect(getCsrfToken(userId)).toBeUndefined();
-  });
-});
-
-describe("csrfProtection middleware", () => {
-  it("skips verification for safe methods (GET, HEAD, OPTIONS)", async () => {
-    const testApp = new Elysia().use(csrfProtection).get("/test", () => ({ ok: true }));
-
-    const response = await testApp.handle(new Request("http://localhost/test", { method: "GET" }));
-    expect(response.status).toBe(200);
-  });
-
-  it("skips verification for unauthenticated state-changing requests (no user payload)", async () => {
-    // Sign-in/sign-up are public — no auth guard, so no payload.sub.
-    const testApp = new Elysia().use(csrfProtection).post("/test", () => ({ ok: true }));
-
-    const response = await testApp.handle(
-      new Request("http://localhost/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      }),
-    );
-    expect(response.status).toBe(200);
-  });
-
-  it("rejects an authenticated POST without a CSRF token (403)", async () => {
-    // Simulate an authenticated route: authGuard sets payload.sub.
-    const testApp = new Elysia()
-      .resolve(() => ({ payload: { sub: "user-789" } }))
-      .use(csrfProtection)
+  it("blocks cross-site POST without Sec-Fetch-Site header (403)", async () => {
+    const app = new Elysia()
+      .use(modernCsrf({ trustedOrigins: ["http://localhost:3000"] }))
       .post("/test", () => ({ ok: true }));
 
-    const response = await testApp.handle(
+    // No Sec-Fetch-Site header — browser would send this for cross-site
+    const response = await app.handle(
       new Request("http://localhost/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -105,93 +39,188 @@ describe("csrfProtection middleware", () => {
     );
 
     expect(response.status).toBe(403);
-    const body = await response.json();
-    expect(body.success).toBe(false);
-    expect(body.message).toContain("missing");
   });
 
-  it("rejects an authenticated POST with an invalid CSRF token (403)", async () => {
-    const userId = "user-abc";
-    setCsrfToken(userId, await csrf.create());
-
-    const testApp = new Elysia()
-      .resolve(() => ({ payload: { sub: userId } }))
-      .use(csrfProtection)
+  it("blocks cross-site POST with Sec-Fetch-Site: cross-site (403)", async () => {
+    const app = new Elysia()
+      .use(modernCsrf({ trustedOrigins: ["http://localhost:3000"] }))
       .post("/test", () => ({ ok: true }));
 
-    const response = await testApp.handle(
+    const response = await app.handle(
       new Request("http://localhost/test", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-csrf-token": "completely-wrong-token",
+          "Sec-Fetch-Site": "cross-site",
         },
         body: JSON.stringify({}),
       }),
     );
 
     expect(response.status).toBe(403);
-    const body = await response.json();
-    expect(body.success).toBe(false);
-    expect(body.message).toContain("invalid");
   });
 
-  it("accepts an authenticated POST with a valid CSRF token and rotates it", async () => {
-    const userId = "user-def";
-    const originalToken = await csrf.create();
-    setCsrfToken(userId, originalToken);
-
-    const testApp = new Elysia()
-      .onError(({ code, error }) => {
-        console.error(`[test] onError: ${code} ${error.message}`);
-      })
-      .resolve(() => ({ payload: { sub: userId } }))
-      .use(csrfProtection)
+  it("allows same-origin POST with Sec-Fetch-Site: same-origin", async () => {
+    const app = new Elysia()
+      .use(modernCsrf({ trustedOrigins: ["http://localhost:3000"] }))
       .post("/test", () => ({ ok: true }));
 
-    const response = await testApp.handle(
+    const response = await app.handle(
       new Request("http://localhost/test", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-csrf-token": originalToken,
+          "Sec-Fetch-Site": "same-origin",
         },
         body: JSON.stringify({}),
       }),
     );
 
     expect(response.status).toBe(200);
-
-    // The stored token should have been rotated.
-    const rotatedToken = getCsrfToken(userId);
-    expect(rotatedToken).toBeTruthy();
-    expect(rotatedToken).not.toBe(originalToken);
-    // The rotated token should still verify against the original (same secret).
-    if (!rotatedToken) throw new Error("Expected rotated token to be stored");
-    expect(csrf.verify(rotatedToken, originalToken)).toBe(true);
   });
 
-  it("rejects a DELETE without a CSRF token (403)", async () => {
-    const testApp = new Elysia()
-      .resolve(() => ({ payload: { sub: "user-ghi" } }))
-      .use(csrfProtection)
+  it("allows same-site POST with Sec-Fetch-Site: same-site", async () => {
+    const app = new Elysia()
+      .use(modernCsrf({ trustedOrigins: ["http://localhost:3000"] }))
+      .post("/test", () => ({ ok: true }));
+
+    const response = await app.handle(
+      new Request("http://localhost/test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Sec-Fetch-Site": "same-site",
+        },
+        body: JSON.stringify({}),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+  });
+
+  it("allows cross-site POST when Origin is in trustedOrigins", async () => {
+    const app = new Elysia()
+      .use(modernCsrf({ trustedOrigins: ["https://trusted-app.com"] }))
+      .post("/test", () => ({ ok: true }));
+
+    const response = await app.handle(
+      new Request("http://localhost/test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Sec-Fetch-Site": "cross-site",
+          Origin: "https://trusted-app.com",
+        },
+        body: JSON.stringify({}),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+  });
+
+  it("blocks cross-site POST when Origin is NOT in trustedOrigins", async () => {
+    const app = new Elysia()
+      .use(modernCsrf({ trustedOrigins: ["https://trusted-app.com"] }))
+      .post("/test", () => ({ ok: true }));
+
+    const response = await app.handle(
+      new Request("http://localhost/test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Sec-Fetch-Site": "cross-site",
+          Origin: "https://evil.com",
+        },
+        body: JSON.stringify({}),
+      }),
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  it("blocks cross-site DELETE (403)", async () => {
+    const app = new Elysia()
+      .use(modernCsrf({ trustedOrigins: ["http://localhost:3000"] }))
       .delete("/test/:id", () => ({ ok: true }));
 
-    const response = await testApp.handle(new Request("http://localhost/test/123", { method: "DELETE" }));
+    const response = await app.handle(
+      new Request("http://localhost/test/123", {
+        method: "DELETE",
+        headers: { "Sec-Fetch-Site": "cross-site" },
+      }),
+    );
+
     expect(response.status).toBe(403);
+  });
+
+  it("blocks cross-site PUT (403)", async () => {
+    const app = new Elysia()
+      .use(modernCsrf({ trustedOrigins: ["http://localhost:3000"] }))
+      .put("/test", () => ({ ok: true }));
+
+    const response = await app.handle(
+      new Request("http://localhost/test", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Sec-Fetch-Site": "cross-site",
+        },
+        body: JSON.stringify({}),
+      }),
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  it("blocks cross-site PATCH (403)", async () => {
+    const app = new Elysia()
+      .use(modernCsrf({ trustedOrigins: ["http://localhost:3000"] }))
+      .patch("/test", () => ({ ok: true }));
+
+    const response = await app.handle(
+      new Request("http://localhost/test", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Sec-Fetch-Site": "cross-site",
+        },
+        body: JSON.stringify({}),
+      }),
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  it("sets Vary: Sec-Fetch-Site header on responses", async () => {
+    const app = new Elysia()
+      .use(modernCsrf({ trustedOrigins: ["http://localhost:3000"] }))
+      .get("/test", () => ({ ok: true }));
+
+    const response = await app.handle(new Request("http://localhost/test", { method: "GET" }));
+    expect(response.status).toBe(200);
+
+    const vary = response.headers.get("Vary");
+    expect(vary).toBeTruthy();
+    expect(vary).toContain("Sec-Fetch-Site");
   });
 });
 
 describe("cookie security", () => {
-  it("csrfCookieOptions uses SameSite=Strict or SameSite=Lax (never None)", () => {
-    expect(["strict", "lax"]).toContain(csrfCookieOptions.sameSite);
+  it("uses SameSite=Strict or SameSite=Lax (never None)", async () => {
+    const { accessTokenCookieOptions, refreshTokenCookieOptions } = await import(
+      "../constants/cookie"
+    );
+
+    expect(["strict", "lax"]).toContain(accessTokenCookieOptions.sameSite);
+    expect(["strict", "lax"]).toContain(refreshTokenCookieOptions.sameSite);
   });
 
-  it("csrfCookieOptions is not httpOnly (so JS can read it)", () => {
-    expect(csrfCookieOptions.httpOnly).toBe(false);
-  });
+  it("auth cookies are httpOnly", async () => {
+    const { accessTokenCookieOptions, refreshTokenCookieOptions } = await import(
+      "../constants/cookie"
+    );
 
-  it("csrfCookieOptions uses root path so it is sent with all requests", () => {
-    expect(csrfCookieOptions.path).toBe("/");
+    expect(accessTokenCookieOptions.httpOnly).toBe(true);
+    expect(refreshTokenCookieOptions.httpOnly).toBe(true);
   });
 });

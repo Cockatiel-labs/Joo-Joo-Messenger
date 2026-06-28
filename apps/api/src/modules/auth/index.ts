@@ -4,8 +4,6 @@ import { Elysia, status } from "elysia";
 import { accessTokenCookieOptions, refreshTokenCookieOptions } from "../../constants/cookie";
 import { ACCESS_TOKEN_EXP, REFRESH_TOKEN_EXP } from "../../constants/jwt";
 import { authGuard } from "../../guards/auth.guard";
-import { csrf } from "../../plugins/csrf";
-import { deleteCsrfToken, setCsrfToken } from "../../plugins/csrf-store";
 import { accessJwtConfig, refreshJwtConfig } from "../../plugins/jwt";
 import { authRateLimit, mediumRateLimit, refreshTokenRateLimit } from "../../plugins/rate-limiter";
 import { AuthResult } from "./model";
@@ -73,7 +71,7 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
           accessJwtNamespace,
           refreshJwtNamespace,
           body,
-          cookie: { accessToken, refreshToken, csrfToken },
+          cookie: { accessToken, refreshToken },
           set,
         }) => {
           try {
@@ -98,10 +96,6 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
               exp: Math.floor(Date.now() / 1000) + REFRESH_TOKEN_EXP, // 7 days
             });
 
-            // Generate and store a CSRF token for the new user (modern-csrf pattern).
-            const csrfTokenValue = await csrf.create();
-            setCsrfToken(user.id, csrfTokenValue);
-
             accessToken.set({
               value: accessJwtToken,
               ...accessTokenCookieOptions,
@@ -110,11 +104,6 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
             refreshToken.set({
               value: refreshJwt,
               ...refreshTokenCookieOptions,
-            });
-
-            csrfToken.set({
-              value: csrfTokenValue,
-              ...csrfCookieOptions,
             });
 
             set.status = 201;
@@ -153,7 +142,7 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
           accessJwtNamespace,
           refreshJwtNamespace,
           body,
-          cookie: { accessToken, refreshToken, csrfToken },
+          cookie: { accessToken, refreshToken },
           set,
         }) => {
           try {
@@ -177,10 +166,6 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
               exp: Math.floor(Date.now() / 1000) + REFRESH_TOKEN_EXP, // 7 days
             });
 
-            // Generate and store a CSRF token for the authenticated user (modern-csrf pattern).
-            const csrfTokenValue = await csrf.create();
-            setCsrfToken(user.id, csrfTokenValue);
-
             accessToken.set({
               value: accessJwt,
               ...accessTokenCookieOptions,
@@ -189,11 +174,6 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
             refreshToken.set({
               value: refreshJwt,
               ...refreshTokenCookieOptions,
-            });
-
-            csrfToken.set({
-              value: csrfTokenValue,
-              ...csrfCookieOptions,
             });
 
             return {
@@ -229,12 +209,7 @@ export const auth = new Elysia({ prefix: "/v1/auth" })
 
   .post(
     "/logout",
-    async ({ payload, cookie: { accessToken, refreshToken } }) => {
-      // Clear the stored CSRF token for this user.
-      if (payload?.sub) {
-        deleteCsrfToken(payload.sub);
-      }
-
+    async ({ cookie: { accessToken, refreshToken } }) => {
       accessToken.set({
         value: "",
         ...accessTokenCookieOptions,

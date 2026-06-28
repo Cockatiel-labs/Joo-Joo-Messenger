@@ -18,7 +18,7 @@
     "drizzle-typebox": "^0.3.3",
     "elysia": "latest",
     "elysia-rate-limit": "^4.6.2",
-    "modern-csrf": "^0.0.3",
+    "modern-csrf": "github:auto-medica-labs/modern-csrf",
     "pg": "^8.21.0",
     "uuid": "^14.0.0"
   },

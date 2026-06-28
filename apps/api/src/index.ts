@@ -3,7 +3,7 @@ import { Elysia } from "elysia";
 import { envConfig } from "./config/env";
 import { auth } from "./modules/auth";
 import { checkDatabaseHealth } from "./modules/health/database";
-import { csrfProtection } from "./plugins/csrf-middleware";
+import { modernCsrf } from "modern-csrf";
 
 await checkDatabaseHealth();
 
@@ -15,7 +15,11 @@ export const app = new Elysia({ prefix: "/api" })
       credentials: true,
     }),
   )
-  .use(csrfProtection)
+  .use(
+    modernCsrf({
+      trustedOrigins: envConfig.ORIGIN_ALLOWLIST,
+    }),
+  )
   .use(auth)
   .listen(envConfig.PORT);
 
